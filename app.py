@@ -6,27 +6,27 @@ import streamlit_authenticator as stauth
 import os
 
 # -------------------------
-# 1. DESIGN "TERMINÁL V3" (Bezpečnější CSS)
+# 1. DESIGN "TERMINAL V4" (Fixed Borders & Login)
 # -------------------------
 st.set_page_config(page_title="Fundamenticks", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
-        /* ZÁKLADNÍ TERMINÁLOVÝ VZHLED */
+        /* BASIC TERMINAL STYLE */
         .stApp {
             background-color: #000000;
             color: #E0E0E0;
             font-family: 'Courier New', Courier, monospace;
         }
         
-        /* SCHOVÁNÍ LIŠT STREAMLITU */
+        /* HIDE STREAMLIT UI */
         header {visibility: hidden !important;}
         [data-testid="stHeader"] {display: none !important;}
         [data-testid="stToolbar"] {display: none !important;}
         footer {display: none !important;}
         .stAppDeployButton {display: none !important;}
         
-        /* FIXNÍ MENU NAHOŘE */
+        /* FIXED NAVBAR */
         .header-container {
             position: fixed;
             top: 0;
@@ -42,18 +42,18 @@ st.markdown("""
             padding: 0 20px;
         }
         
-        /* POSUN OBSAHU DOLŮ (Aby nebyl schovaný pod lištou) */
+        /* CONTENT PADDING */
         .block-container {
             padding-top: 90px !important; 
         }
 
-        /* STYLOVÁNÍ TEXTŮ */
+        /* TEXT STYLING */
         h1, h2, h3, h4, p, div, span, li, ul {
             font-family: 'Courier New', Courier, monospace !important;
             color: #E0E0E0 !important;
         }
         
-        /* TLAČÍTKA - HACKER STYLE */
+        /* BUTTONS - GREEN HOVER EFFECT (KEPT) */
         .stButton>button {
             background-color: #000000;
             color: #00FF00;
@@ -70,18 +70,25 @@ st.markdown("""
             box-shadow: 0 0 10px #00FF00;
         }
         
-        /* BOXÍKY */
+        /* BOXES - NO HOVER EFFECT ANYMORE */
         .feature-box {
             border: 1px solid #333;
             padding: 20px;
             margin-bottom: 10px;
             background-color: #0a0a0a;
-        }
-        .feature-box:hover {
-            border-color: #00FF00;
+            height: 100%;
         }
         
-        /* NAVBAR TEXT */
+        /* SPECIAL CLASS FOR PAID TIER (ALWAYS GREEN) */
+        .paid-box {
+            border: 1px solid #00FF00 !important;
+            padding: 20px;
+            margin-bottom: 10px;
+            background-color: #0a0a0a;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.1);
+        }
+        
+        /* NAVBAR LOGO */
         .nav-logo {
             font-size: 20px;
             font-weight: bold;
@@ -89,7 +96,7 @@ st.markdown("""
             letter-spacing: 2px;
         }
 
-        /* LOGIN INPUTS */
+        /* INPUT FIELDS */
         input {
             background-color: #111 !important;
             color: white !important;
@@ -117,8 +124,15 @@ def get_data(file_key):
     return pd.DataFrame()
 
 # -------------------------
-# 3. LOGIN SYSTÉM
+# 3. AUTHENTICATION & SESSION
 # -------------------------
+# Fixing the login memory issue by checking session state explicitly
+
+if 'authentication_status' not in st.session_state:
+    st.session_state['authentication_status'] = None
+if 'username' not in st.session_state:
+    st.session_state['username'] = None
+
 names = ['SYSTEM ADMIN', 'GUEST USER']
 usernames = ['admin', 'guest']
 hashed_passwords = [
@@ -128,19 +142,19 @@ hashed_passwords = [
 
 authenticator = stauth.Authenticate(
     names, usernames, hashed_passwords,
-    'cookie_fundamenticks_v4', 'key_signature_xx_v4', cookie_expiry_days=1
+    'fundamenticks_cookie_v5', 'random_key_v5', cookie_expiry_days=0
 )
 
-# Inicializace
+# Navigation State
 if 'page' not in st.session_state: st.session_state['page'] = 'landing'
 if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'watchlist'
 
 # -------------------------
-# 4. FUNKCE PRO VZHLED
+# 4. RENDER FUNCTIONS
 # -------------------------
 
 def render_navbar():
-    """Horní lišta"""
+    """Fixed Top Bar"""
     st.markdown("""
         <div class="header-container">
             <div class="nav-logo">> FUNDAMENTICKS_</div>
@@ -149,9 +163,8 @@ def render_navbar():
     """, unsafe_allow_html=True)
 
 def render_landing():
-    # TLAČÍTKO LOGIN/START
+    # Header Status
     st.write("")
-    
     col_head_1, col_head_2 = st.columns([3,1])
     with col_head_1:
         st.markdown("<h1>SYSTEM STATUS: <span style='color:#00FF00'>ONLINE</span></h1>", unsafe_allow_html=True)
@@ -162,15 +175,15 @@ def render_landing():
 
     st.markdown("---")
     
-    # PRODUKTY
+    # PRODUCT FEATURES (English)
     c1, c2, c3 = st.columns(3)
     
     with c1:
         st.markdown("""
         <div class="feature-box">
             <h4>[ MACRO_DATA ]</h4>
-            <p>Analyzujte historickou sezónnost klíčových měn (USD, EUR) za posledních 15 let. 
-            Identifikujte měsíce s nejvyšší pravděpodobností růstu či poklesu.</p>
+            <p>Analyze historical seasonality of key currencies (USD, EUR) over the last 15 years. 
+            Identify months with the highest probability of growth or decline and gain a statistical edge.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -178,17 +191,17 @@ def render_landing():
         st.markdown("""
         <div class="feature-box">
             <h4>[ AI_SCORING ]</h4>
-            <p>Náš algoritmus v reálném čase vyhodnocuje fundamentální zprávy (NFP, CPI, FED). 
-            Okamžitě převádí složitá makroekonomická data na jednoduché skóre.</p>
+            <p>Our algorithm evaluates fundamental news (NFP, CPI, FED) in real-time. 
+            Instantly translates complex macroeconomic data into a simple score: Bullish or Bearish.</p>
         </div>
         """, unsafe_allow_html=True)
         
     with c3:
         st.markdown("""
         <div class="feature-box">
-            <h4>[ LIVE_SIGNALS ]</h4>
-            <p>Automatizovaný systém generuje obchodní signály na základě konfluence sezónnosti a fundamentů. 
-            Získejte jasné vstupní a výstupní zóny.</p>
+            <h4>[ WATCHLIST ]</h4>
+            <p>Create a personalized list of assets to track. Monitor price action 
+            and seasonal trends for specific indices and currency pairs in one dashboard.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -210,8 +223,9 @@ def render_landing():
         """, unsafe_allow_html=True)
         
     with col_paid:
+        # This one gets the special .paid-box class with the GREEN BORDER
         st.markdown("""
-        <div class="feature-box" style="text-align:center; border-color:#00FF00">
+        <div class="paid-box" style="text-align:center">
             <h3 style="color:#00FF00">TIER: PAID (ADMIN)</h3>
             <ul style="list-style-type:none; padding:0; text-align:left;">
                 <li>[x] Unlimited assets in watchlist</li>
@@ -221,6 +235,14 @@ def render_landing():
             </ul>
         </div>
         """, unsafe_allow_html=True)
+
+    # GET STARTED BUTTON (Centers the flow)
+    st.write("")
+    c_btn1, c_btn2, c_btn3 = st.columns([1, 2, 1])
+    with c_btn2:
+        if st.button("GET STARTED >>", use_container_width=True):
+            st.session_state['page'] = 'login'
+            st.rerun()
 
 def render_login_page():
     st.write("")
@@ -233,7 +255,10 @@ def render_login_page():
         tab1, tab2 = st.tabs(["LOGIN", "REGISTER"])
         
         with tab1:
+            # Login widget
             name, status, user = authenticator.login('Login', 'main')
+            
+            # Logic to handle login success immediately
             if status:
                 st.session_state['authentication_status'] = True
                 st.session_state['name'] = name
@@ -255,6 +280,7 @@ def render_login_page():
             st.rerun()
 
 def render_dashboard():
+    # Determine Status
     user_status = 'PAID' if st.session_state["username"] == 'admin' else 'FREE'
     
     # SIDEBAR
@@ -284,6 +310,7 @@ def render_dashboard():
             st.success(f"DATA LINK ESTABLISHED: {choice}")
             df = get_data("lines")
             if not df.empty:
+                st.markdown("### SEASONALITY FORECAST")
                 df_m = df.melt(id_vars=['Month'], value_vars=['Return_15Y', 'Return_10Y', 'Return_5Y'])
                 
                 fig = px.line(df_m, x='Month', y='value', color='variable', markers=True)
@@ -309,7 +336,7 @@ def render_dashboard():
             st.success("ACCESS GRANTED: FULL MARKET OVERVIEW")
             df = get_data("heatmap")
             if not df.empty:
-                st.markdown("### > MONTHLY RETURN HEATMAP")
+                st.markdown("### > MONTHLY RETURN HEATMAP (USD)")
                 months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
                 piv = df.pivot(index='Year', columns='Month', values='Return').reindex(columns=months)
                 
@@ -324,17 +351,18 @@ def render_dashboard():
                 st.plotly_chart(fig, use_container_width=True)
 
 # -------------------------
-# 5. START
+# 5. MAIN APP CONTROLLER
 # -------------------------
 render_navbar()
 
-if st.session_state['page'] == 'landing':
-    render_landing()
-elif st.session_state['page'] == 'login':
-    render_login_page()
-elif st.session_state['page'] == 'dashboard':
-    if st.session_state.get('authentication_status'):
-        render_dashboard()
+# If user is logged in via cookie/session, go straight to dashboard
+if st.session_state.get('authentication_status'):
+    render_dashboard()
+else:
+    # Router for non-logged users
+    if st.session_state['page'] == 'landing':
+        render_landing()
+    elif st.session_state['page'] == 'login':
+        render_login_page()
     else:
-        st.session_state['page'] = 'login'
-        st.rerun()
+        render_landing()
