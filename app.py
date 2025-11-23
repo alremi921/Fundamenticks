@@ -6,7 +6,7 @@ import streamlit_authenticator as stauth
 import os
 
 # -------------------------
-# 1. DESIGN "HACKER TERMINAL" (Fixed Layout)
+# 1. DESIGN "HACKER TERMINAL" (Stabilní verze)
 # -------------------------
 st.set_page_config(page_title="Fundamenticks", layout="wide", initial_sidebar_state="collapsed")
 
@@ -19,55 +19,37 @@ st.markdown("""
             font-family: 'Courier New', Courier, monospace;
         }
         
-        /* 2. SCHOVÁNÍ PRVKŮ STREAMLITU */
+        /* 2. SCHOVÁNÍ PRVKŮ STREAMLITU (Header, Footer) */
         header {visibility: hidden !important;}
         [data-testid="stHeader"] {display: none !important;}
         [data-testid="stToolbar"] {display: none !important;}
         footer {display: none !important;}
         .stAppDeployButton {display: none !important;}
         
-        /* 3. OPRAVA LIŠTY (FIXNÍ POZICE) */
-        /* Tímto cílíme na první řádek s logem a tlačítkem */
-        div[data-testid="stHorizontalBlock"]:nth-of-type(1) {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #000000;
-            z-index: 999999; /* Aby byla vždy nahoře */
-            padding: 15px 30px;
-            border-bottom: 1px solid #333;
-            height: 80px; /* Pevná výška lišty */
-            display: flex;
-            align-items: center;
-        }
-        
-        /* 4. ODSTRČENÍ OBSAHU (ABY NEBYL POD LIŠTOU) */
-        /* Toto je to nejdůležitější - posune vše dolů */
+        /* 3. OPRAVA ROZLOŽENÍ (Aby lišta nepřekrývala obsah) */
         .block-container {
-            padding-top: 120px !important; 
+            padding-top: 2rem !important; /* Menší odsazení, lišta bude součástí toku */
             padding-left: 2rem !important;
             padding-right: 2rem !important;
         }
 
-        /* 5. STYLOVÁNÍ TEXTŮ */
+        /* 4. TEXTY */
         h1, h2, h3, h4, p, div, span, li, ul {
             font-family: 'Courier New', Courier, monospace !important;
             color: #E0E0E0 !important;
         }
 
-        /* 6. LOGO (TEXTOVÉ) */
+        /* 5. LOGO TEXT */
         .brand-text {
-            font-size: 26px;
+            font-size: 28px;
             font-weight: 900;
             color: #E0E0E0;
-            letter-spacing: 2px;
-            margin: 0;
-            padding: 0;
-            line-height: 1.5;
+            letter-spacing: 3px;
+            margin-top: 10px;
+            text-transform: uppercase;
         }
 
-        /* 7. TLAČÍTKA (ZELENÝ RÁMEČEK) */
+        /* 6. TLAČÍTKA (ZELENÝ RÁMEČEK) */
         .stButton > button {
             background-color: #000000 !important;
             color: #00FF00 !important;
@@ -85,8 +67,11 @@ st.markdown("""
             color: #000000 !important;
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
         }
+        
+        /* Červené tlačítko pro GO IN (aby bylo výrazné pro test) */
+        /* Použijeme specifický selektor, pokud to půjde, jinak necháme zelené */
 
-        /* 8. KARTY (BOXÍKY) */
+        /* 7. KARTY (BOXÍKY) */
         .paid-box {
             border: 1px solid #00FF00 !important;
             padding: 20px;
@@ -104,18 +89,18 @@ st.markdown("""
             height: 100%;
         }
 
-        /* 9. INPUTY */
+        /* 8. INPUTY */
         input {
             background-color: #111 !important;
             color: white !important;
             border: 1px solid #333 !important;
         }
         
-        /* Zarovnání tlačítka v liště doprava */
-        div[data-testid="column"]:nth-of-type(2) {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
+        /* 9. HORIZONTÁLNÍ ČÁRA (HR) - Stylizovaná */
+        hr {
+            border-color: #333;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -153,49 +138,57 @@ hashed_passwords = [
     '$2b$12$t3n1S7pC2pP7tKjO9XbH9OqT3yGgY7Xw8tW1wG7p8r'
 ]
 
-# Cookie v11 (Nový reset)
 authenticator = stauth.Authenticate(
     names, usernames, hashed_passwords,
-    'fundamenticks_cookie_v11', 'random_key_v11', cookie_expiry_days=1
+    'fundamenticks_cookie_final', 'random_key_final', cookie_expiry_days=1
 )
 
 if 'page' not in st.session_state: st.session_state['page'] = 'landing'
 if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'watchlist'
 
 # -------------------------
-# 4. UI FUNKCE
+# 4. VYKRESLOVACÍ FUNKCE
 # -------------------------
 
 def render_navbar():
-    """
-    Vykreslí horní lištu.
-    Díky CSS (nth-of-type(1)) bude tento první 'st.columns' blok přilepený nahoře.
-    """
-    # Rozložení: Logo vlevo (velký sloupec), Tlačítko vpravo (malý sloupec)
-    c1, c2 = st.columns([7, 2])
+    """Horní lišta s logem a tlačítky"""
+    # Místo fixní pozice použijeme kontejner na začátku stránky.
+    # Streamlit to vykreslí nahoře a zbytek posune dolů -> nic se nepřekryje.
     
-    with c1:
-        # Prostý text, ne tlačítko
-        st.markdown('<p class="brand-text">> FUNDAMENTICKS_</p>', unsafe_allow_html=True)
+    with st.container():
+        c1, c2, c3, c4 = st.columns([4, 2, 1.5, 1.5])
         
-    with c2:
-        # Tlačítko Login/Logout
-        if st.session_state.get('authentication_status'):
-             if st.button("LOGOUT", key="nav_logout"):
-                 authenticator.logout('LOGOUT', 'main')
-        else:
-            if st.button("LOGIN / START SYSTEM", key="nav_login"):
-                st.session_state['page'] = 'login'
-                st.rerun()
+        with c1:
+            st.markdown('<div class="brand-text">> FUNDAMENTICKS_</div>', unsafe_allow_html=True)
+            
+        with c3:
+            # Tlačítko GO IN (Okamžitý vstup pro test)
+            if not st.session_state.get('authentication_status'):
+                if st.button("GO IN (TEST)"):
+                    # Magický script pro přihlášení
+                    st.session_state['authentication_status'] = True
+                    st.session_state['name'] = 'Tester'
+                    st.session_state['username'] = 'admin' # Dáme mu admin práva
+                    st.session_state['page'] = 'dashboard'
+                    st.rerun()
+                    
+        with c4:
+            # Login / Logout
+            if st.session_state.get('authentication_status'):
+                 if st.button("LOGOUT"):
+                     authenticator.logout('LOGOUT', 'main')
+            else:
+                if st.button("LOGIN / SIGN IN"):
+                    st.session_state['page'] = 'login'
+                    st.rerun()
+        
+        st.markdown("---") # Oddělovací čára pod lištou
 
 def render_landing():
-    # Díky paddingu v CSS už nepotřebujeme 'st.write("")' pro odskok
-    
+    st.write("")
     col_head_1, col_head_2 = st.columns([3,1])
     with col_head_1:
         st.markdown("<h1>SYSTEM STATUS: <span style='color:#00FF00'>ONLINE</span></h1>", unsafe_allow_html=True)
-
-    # Žádná čára zde
 
     st.write("")
     
@@ -245,7 +238,6 @@ def render_landing():
             </ul>
         </div>
         """, unsafe_allow_html=True)
-        # Tlačítko pod boxem
         if st.button("GET STARTED (FREE)", key="btn_free"):
             st.session_state['page'] = 'login'
             st.rerun()
@@ -262,15 +254,12 @@ def render_landing():
             </ul>
         </div>
         """, unsafe_allow_html=True)
-        # Tlačítko pod boxem
         if st.button("GET STARTED (PAID)", key="btn_paid"):
             st.session_state['page'] = 'login'
             st.rerun()
 
 def render_login_page():
-    # Odskok kvůli liště řeší CSS, ale pro jistotu malá mezera pro vizuál
-    st.write("") 
-    
+    st.write("")
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         st.markdown("<div class='feature-box'><h3>> AUTHENTICATION REQUIRED</h3></div>", unsafe_allow_html=True)
@@ -312,7 +301,6 @@ def render_dashboard():
         if st.button("> WATCHLIST"): st.session_state['active_tab'] = 'watchlist'; st.rerun()
         if st.button("> CURRENCY HUB"): st.session_state['active_tab'] = 'currency'; st.rerun()
         st.markdown("---")
-        # Logout v sidebaru
         authenticator.logout('LOGOUT', 'main')
 
     st.markdown(f"<h2>MODULE: {st.session_state['active_tab'].upper()}</h2>", unsafe_allow_html=True)
@@ -367,8 +355,6 @@ def render_dashboard():
 # -------------------------
 # 5. HLAVNÍ KONTROLER
 # -------------------------
-# Vykreslíme lištu jako první věc. 
-# Díky CSS se 'přilepí' nahoru.
 render_navbar()
 
 if st.session_state.get('authentication_status'):
