@@ -6,7 +6,7 @@ import streamlit_authenticator as stauth
 import os
 
 # -------------------------
-# 1. DESIGN "TERMINÁL V2" (Agresivní CSS)
+# 1. DESIGN "TERMINÁL V3" (Bezpečnější CSS)
 # -------------------------
 st.set_page_config(page_title="Fundamenticks", layout="wide", initial_sidebar_state="collapsed")
 
@@ -19,13 +19,12 @@ st.markdown("""
             font-family: 'Courier New', Courier, monospace;
         }
         
-        /* SCHOVÁNÍ LIŠT (MOBIL I DESKTOP) - "Atomová" metoda */
+        /* SCHOVÁNÍ LIŠT STREAMLITU */
         header {visibility: hidden !important;}
         [data-testid="stHeader"] {display: none !important;}
         [data-testid="stToolbar"] {display: none !important;}
         footer {display: none !important;}
         .stAppDeployButton {display: none !important;}
-        div[class^="st-emotion-cache-1"] { display: none !important; } /* Skrývá horní lišty */
         
         /* FIXNÍ MENU NAHOŘE */
         .header-container {
@@ -43,13 +42,13 @@ st.markdown("""
             padding: 0 20px;
         }
         
-        /* POSUN OBSAHU DOLŮ */
+        /* POSUN OBSAHU DOLŮ (Aby nebyl schovaný pod lištou) */
         .block-container {
-            padding-top: 80px !important; 
+            padding-top: 90px !important; 
         }
 
         /* STYLOVÁNÍ TEXTŮ */
-        h1, h2, h3, h4, p, div, span {
+        h1, h2, h3, h4, p, div, span, li, ul {
             font-family: 'Courier New', Courier, monospace !important;
             color: #E0E0E0 !important;
         }
@@ -89,8 +88,8 @@ st.markdown("""
             color: #FFFFFF !important;
             letter-spacing: 2px;
         }
-        
-        /* LOGIN FORM UPDATE */
+
+        /* LOGIN INPUTS */
         input {
             background-color: #111 !important;
             color: white !important;
@@ -120,22 +119,19 @@ def get_data(file_key):
 # -------------------------
 # 3. LOGIN SYSTÉM
 # -------------------------
-# Admin heslo: 'password123'
-# Guest heslo: 'guest123'
-
 names = ['SYSTEM ADMIN', 'GUEST USER']
 usernames = ['admin', 'guest']
 hashed_passwords = [
     '$2b$12$R.S4lQd8I/Iq3ZlA5tQ9uOxFp/H32mXJjK/iM0V1n4hR', # password123
-    '$2b$12$t3n1S7pC2pP7tKjO9XbH9OqT3yGgY7Xw8tW1wG7p8r'  # guest123 (nebo free123)
+    '$2b$12$t3n1S7pC2pP7tKjO9XbH9OqT3yGgY7Xw8tW1wG7p8r'  # guest123
 ]
 
 authenticator = stauth.Authenticate(
     names, usernames, hashed_passwords,
-    'cookie_fundamenticks_v3', 'key_signature_xx_v3', cookie_expiry_days=1
+    'cookie_fundamenticks_v4', 'key_signature_xx_v4', cookie_expiry_days=1
 )
 
-# Inicializace stavu
+# Inicializace
 if 'page' not in st.session_state: st.session_state['page'] = 'landing'
 if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'watchlist'
 
@@ -144,34 +140,16 @@ if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'watch
 # -------------------------
 
 def render_navbar():
-    """Vlastní HTML lišta s tlačítky uvnitř"""
-    
-    # Rozložení lišty
-    c1, c2 = st.columns([8, 2])
-    
-    # 1. Část: Logo a Lišta (HTML)
+    """Horní lišta"""
     st.markdown("""
         <div class="header-container">
             <div class="nav-logo">> FUNDAMENTICKS_</div>
-            <div id="nav-action"></div> 
+            <div></div>
         </div>
     """, unsafe_allow_html=True)
 
-    # 2. Část: Tlačítko Login/Logout (Streamlit)
-    # Trik: Použijeme sidebar nebo prázdné místo, aby tlačítko "plavalo" nahoře
-    # Ale ve Streamlitu je těžké dát tlačítko DO HTML divu. 
-    # Uděláme to jednodušeji: Tlačítko dáme hned pod lištu, ale CSS ho vytáhne nahoru.
-    
-    # Zjednodušená verze pro funkčnost:
-    # Tlačítka ovládáme přes standardní logiku, ale vizuálně jsou pod lištou.
-    # Uživatel chtěl tlačítko NA liště. To vyžaduje hack. 
-    # Místo toho uděláme tlačítko hned pod, které vypadá, že tam patří, nebo ho necháme v Landing Page.
-    
-    # PRO TUTO CHVÍLI: Necháme čistou lištu a tlačítka budou v obsahu stránky (Clean Design).
-    # Pokud je user přihlášen, odhlášení je v Sidebaru.
-
 def render_landing():
-    # TLAČÍTKO LOGIN/START PŘÍMO ZDE (Vypadá lépe v centru)
+    # TLAČÍTKO LOGIN/START
     st.write("")
     
     col_head_1, col_head_2 = st.columns([3,1])
@@ -184,7 +162,7 @@ def render_landing():
 
     st.markdown("---")
     
-    # PRODUKTOVÉ KARTY (2-3 věty)
+    # PRODUKTY
     c1, c2, c3 = st.columns(3)
     
     with c1:
@@ -192,7 +170,7 @@ def render_landing():
         <div class="feature-box">
             <h4>[ MACRO_DATA ]</h4>
             <p>Analyzujte historickou sezónnost klíčových měn (USD, EUR) za posledních 15 let. 
-            Identifikujte měsíce s nejvyšší pravděpodobností růstu či poklesu a získejte statistickou výhodu nad trhem.</p>
+            Identifikujte měsíce s nejvyšší pravděpodobností růstu či poklesu.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -201,7 +179,7 @@ def render_landing():
         <div class="feature-box">
             <h4>[ AI_SCORING ]</h4>
             <p>Náš algoritmus v reálném čase vyhodnocuje fundamentální zprávy (NFP, CPI, FED). 
-            Okamžitě převádí složitá makroekonomická data na jednoduché skóre: Bullish nebo Bearish.</p>
+            Okamžitě převádí složitá makroekonomická data na jednoduché skóre.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -210,7 +188,7 @@ def render_landing():
         <div class="feature-box">
             <h4>[ LIVE_SIGNALS ]</h4>
             <p>Automatizovaný systém generuje obchodní signály na základě konfluence sezónnosti a fundamentů. 
-            Získejte jasné vstupní a výstupní zóny pro minimalizaci rizika a maximalizaci zisku.</p>
+            Získejte jasné vstupní a výstupní zóny.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -252,7 +230,6 @@ def render_login_page():
     with c2:
         st.markdown("<div class='feature-box'><h3>> AUTHENTICATION REQUIRED</h3></div>", unsafe_allow_html=True)
         
-        # Tabs pro Login a "Registraci"
         tab1, tab2 = st.tabs(["LOGIN", "REGISTER"])
         
         with tab1:
@@ -268,7 +245,7 @@ def render_login_page():
                 
         with tab2:
             st.warning("REGISTRATION PROTOCOL: DISABLED (DB_OFFLINE)")
-            st.markdown("For DEMO access, use the following credentials:")
+            st.markdown("For DEMO access, use credentials below:")
             st.code("User: admin\nPass: password123")
             st.code("User: guest\nPass: guest123")
         
@@ -278,7 +255,6 @@ def render_login_page():
             st.rerun()
 
 def render_dashboard():
-    # Admin má status PAID, ostatní FREE
     user_status = 'PAID' if st.session_state["username"] == 'admin' else 'FREE'
     
     # SIDEBAR
@@ -302,7 +278,6 @@ def render_dashboard():
             
         choice = st.selectbox("SELECT TARGET:", assets)
         
-        # Ochrana FREE verze
         if user_status == 'FREE' and choice != "SPX500":
              st.error("ACCESS DENIED. UPGRADE TO PAID TIER.")
         else:
@@ -311,7 +286,6 @@ def render_dashboard():
             if not df.empty:
                 df_m = df.melt(id_vars=['Month'], value_vars=['Return_15Y', 'Return_10Y', 'Return_5Y'])
                 
-                # Tmavý graf
                 fig = px.line(df_m, x='Month', y='value', color='variable', markers=True)
                 fig.update_layout(
                     plot_bgcolor='black', paper_bgcolor='black', font_color='#E0E0E0',
@@ -328,13 +302,11 @@ def render_dashboard():
             st.markdown("""
                 <div style="border: 1px dashed red; padding: 20px; text-align: center;">
                     <h3 style="color:red">RESTRICTED AREA</h3>
-                    <p>Currency Overview, Sentiment Analysis and Heatmaps are available for PAID users only.</p>
+                    <p>Currency Overview is available for PAID users only.</p>
                 </div>
             """, unsafe_allow_html=True)
         else:
             st.success("ACCESS GRANTED: FULL MARKET OVERVIEW")
-            
-            # Heatmapa
             df = get_data("heatmap")
             if not df.empty:
                 st.markdown("### > MONTHLY RETURN HEATMAP")
@@ -343,7 +315,7 @@ def render_dashboard():
                 
                 fig = go.Figure(data=go.Heatmap(
                     z=piv.values, x=piv.columns, y=piv.index, 
-                    colorscale='Electric', # Hacker barvy
+                    colorscale='Electric',
                     text=piv.values, texttemplate="%{text:.1f}"
                 ))
                 fig.update_layout(
