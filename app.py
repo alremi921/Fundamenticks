@@ -4,15 +4,16 @@ import plotly.graph_objects as go
 import plotly.express as px
 import streamlit_authenticator as stauth
 import os
+import time
 
 # -------------------------
-# 1. KONFIGURACE A CSS (TERMINAL STYLE)
+# 1. CSS DESIGN (HACKER TERMINAL)
 # -------------------------
 st.set_page_config(page_title="Fundamenticks", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
-        /* HLAVNÍ BARVY */
+        /* HLAVNÍ BARVY - ČERNÁ A ZELENÁ */
         .stApp {
             background-color: #000000;
             color: #E0E0E0;
@@ -24,7 +25,8 @@ st.markdown("""
         [data-testid="stHeader"] {display: none !important;}
         footer {display: none !important;}
         
-        /* FIXNÍ HORNÍ LIŠTA */
+        /* --- FIXNÍ LIŠTA NAHOŘE --- */
+        /* Cílíme na první blok stránky a přibijeme ho nahoru */
         div[data-testid="stVerticalBlock"] > div:first-child {
             position: fixed;
             top: 0;
@@ -33,22 +35,26 @@ st.markdown("""
             z-index: 999999;
             background-color: #000000;
             border-bottom: 1px solid #333;
-            padding: 10px 20px;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            padding-left: 2rem;
+            padding-right: 2rem;
         }
 
-        /* ODSTRČENÍ OBSAHU DOLŮ (Aby nebyl pod lištou) */
+        /* --- ODSTRČENÍ OBSAHU DOLŮ --- */
+        /* Toto je ta oprava - posuneme obsah, aby nezačínal pod lištou */
         .block-container {
-            padding-top: 100px !important;
+            padding-top: 130px !important; /* Dost místa pro lištu */
             padding-left: 2rem !important;
             padding-right: 2rem !important;
         }
 
-        /* SIDEBAR (LEVÁ LIŠTA) */
+        /* SIDEBAR (LEVÁ LIŠTA PRO MENU) */
         section[data-testid="stSidebar"] {
             background-color: #050505;
             border-right: 1px solid #333;
-            padding-top: 50px; /* Aby nezasahovala do horní lišty */
-            z-index: 99999;
+            top: 80px !important; /* Aby nezasahovala do horní lišty */
+            height: calc(100vh - 80px) !important;
         }
 
         /* TEXTY */
@@ -57,13 +63,13 @@ st.markdown("""
             color: #E0E0E0 !important;
         }
 
-        /* LOGO TEXT */
+        /* LOGO TEXT V LIŠTĚ */
         .brand-text {
             font-size: 24px;
             font-weight: 900;
             color: #E0E0E0;
             letter-spacing: 2px;
-            margin-top: 8px;
+            margin-top: 5px;
         }
 
         /* TLAČÍTKA (ZELENÝ RÁMEČEK) */
@@ -140,10 +146,9 @@ hashed_passwords = [
 
 authenticator = stauth.Authenticate(
     names, usernames, hashed_passwords,
-    'cookie_v13_fixed', 'key_v13_fixed', cookie_expiry_days=1
+    'cookie_v14_final', 'key_v14_final', cookie_expiry_days=1
 )
 
-# Inicializace stavu
 if 'page' not in st.session_state: st.session_state['page'] = 'landing'
 if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'dashboard_home'
 
@@ -151,8 +156,10 @@ if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'dashb
 # 4. HORNÍ LIŠTA (NAVBAR)
 # -------------------------
 def render_navbar():
-    """Fixní lišta nahoře"""
-    # Tento kontejner bude "přibitý" nahoře díky CSS
+    """
+    Toto je obsah fixní lišty. 
+    Díky CSS je tento kontejner přibitý nahoře.
+    """
     with st.container():
         c1, c2, c3, c4 = st.columns([4, 2, 1.5, 1.5])
         
@@ -160,32 +167,30 @@ def render_navbar():
             st.markdown('<div class="brand-text">> FUNDAMENTICKS_</div>', unsafe_allow_html=True)
             
         with c3:
-            # Tlačítko GO IN (Pro rychlý test) - vidí jen nepřihlášený
+            # Tlačítko GO IN (Pro rychlý test) - jen když není přihlášen
             if not st.session_state.get('authentication_status'):
                 if st.button("GO IN (TEST)"):
                     st.session_state['authentication_status'] = True
                     st.session_state['name'] = 'Tester'
                     st.session_state['username'] = 'admin'
                     st.session_state['page'] = 'dashboard'
+                    st.session_state['active_tab'] = 'dashboard_home'
                     st.rerun()
                     
         with c4:
-            # Login / Logout Tlačítko
-            if st.session_state.get('authentication_status'):
-                # Pokud je přihlášen, tlačítko Logout je v Sidebaru, zde nic nebo profil
-                pass 
-            else:
+            # Login / Sign In Tlačítko
+            if not st.session_state.get('authentication_status'):
                 if st.button("LOGIN / SIGN IN"):
                     st.session_state['page'] = 'login'
                     st.rerun()
+            # Pokud je přihlášen, tlačítko tu není, logout je v menu vlevo
 
 # -------------------------
 # 5. STRÁNKY
 # -------------------------
 
 def render_landing():
-    # Odskok (aby obsah nebyl pod lištou)
-    st.write("") 
+    # Obsah už nemusíme posouvat ručně, dělá to CSS (.block-container padding)
     
     col_head_1, col_head_2 = st.columns([3,1])
     with col_head_1:
@@ -193,7 +198,7 @@ def render_landing():
     
     st.write("")
     
-    # FEATURES (S TEXTEM, JAK JSI CHTĚL)
+    # FEATURES (S TEXTEM)
     c1, c2, c3 = st.columns(3)
     
     with c1:
@@ -260,7 +265,6 @@ def render_landing():
             st.rerun()
 
 def render_login_page():
-    st.write("")
     c1, c2, c3 = st.columns([1,2,1])
     with c2:
         st.markdown("<div class='data-box'><h3>> AUTHENTICATION</h3></div>", unsafe_allow_html=True)
@@ -282,11 +286,12 @@ def render_login_page():
             st.rerun()
 
 def render_dashboard_content():
-    # BOČNÍ MENU (SIDEBAR) - PEVNĚ NASTAVENÉ
+    # BOČNÍ MENU (SIDEBAR)
     with st.sidebar:
         st.markdown(f"## USER: {st.session_state['username'].upper()}")
         st.markdown("---")
         
+        # Navigace
         if st.button("DASHBOARD"): st.session_state['active_tab'] = 'dashboard_home'; st.rerun()
         if st.button("CURRENCY OVERVIEW"): st.session_state['active_tab'] = 'currency_overview'; st.rerun()
         if st.button("ECONOMIC CALENDAR"): st.session_state['active_tab'] = 'economic_calendar'; st.rerun()
@@ -295,14 +300,14 @@ def render_dashboard_content():
             
         st.markdown("---")
         
-        # OPRAVA LOGOUTU - Manuální reset
+        # LOGOUT (Natvrdo vymazat session a přesměrovat)
         if st.button("LOGOUT"):
             st.session_state['authentication_status'] = None
             st.session_state['username'] = None
             st.session_state['page'] = 'landing'
             st.rerun()
 
-    # HLAVNÍ OBSAH
+    # HLAVNÍ OBSAH DASHBOARDU
     tab = st.session_state['active_tab']
     
     if tab == 'dashboard_home':
@@ -314,6 +319,17 @@ def render_dashboard_content():
              fig = px.line(df, x='Month', y='Return_15Y', title="USD 15-Year Seasonality Trend")
              fig.update_layout(plot_bgcolor='black', paper_bgcolor='black', font_color='#E0E0E0')
              st.plotly_chart(fig, use_container_width=True)
+        
+        st.markdown("#### [ WEEKLY NEWS BRIEF ]")
+        st.markdown("""
+        <div class='data-box'>
+        <ul style='list-style-type:none; padding:0;'>
+        <li><b>MON:</b> USD Empire State Manufacturing Index (Low Impact)</li>
+        <li><b>TUE:</b> USD Retail Sales m/m (High Impact)</li>
+        <li><b>WED:</b> USD FOMC Meeting Minutes (Critical)</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
     elif tab == 'currency_overview':
         st.markdown("## > CURRENCY OVERVIEW: USD")
@@ -356,8 +372,12 @@ def render_dashboard_content():
             asset = st.selectbox("SELECT ASSET", ["SPX500", "EURUSD", "GBPUSD", "XAUUSD", "BTCUSD"])
         with col2:
             st.markdown(f"<div class='data-box'><h3>ANALYZING: {asset}</h3></div>", unsafe_allow_html=True)
-            # Zde by byl graf
-            st.line_chart([1, 3, 2, 4, 5])
+            # Simulace grafu
+            chart_data = pd.DataFrame(
+                {'Price': [100, 102, 101, 105, 104, 108, 107]},
+                index=pd.date_range(start='2024-01-01', periods=7)
+            )
+            st.line_chart(chart_data)
 
     elif tab == 'profile':
         st.markdown("## > USER PROFILE")
@@ -366,13 +386,14 @@ def render_dashboard_content():
         <div class='data-box'>
         <p><b>USERNAME:</b> {st.session_state['username']}</p>
         <p><b>STATUS:</b> PAID (ADMIN)</p>
-        <p><b>API KEY:</b> ******************</p>
+        <p><b>API KEY:</b> 8f92-x921-8821-xxxx</p>
         </div>
         """, unsafe_allow_html=True)
 
 # -------------------------
-# 6. KONTROLER APLIKACE
+# 6. HLAVNÍ KONTROLER
 # -------------------------
+# Vykreslit lištu (bude nahoře díky CSS)
 render_navbar()
 
 if st.session_state.get('authentication_status'):
