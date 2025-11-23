@@ -6,7 +6,7 @@ import streamlit_authenticator as stauth
 import os
 
 # -------------------------
-# 1. DESIGN "TERMINAL V7" (STABLE & GREEN)
+# 1. DESIGN "TERMINAL V8" (Fixed Text Logo & No Lines)
 # -------------------------
 st.set_page_config(page_title="Fundamenticks", layout="wide", initial_sidebar_state="collapsed")
 
@@ -26,15 +26,15 @@ st.markdown("""
         footer {display: none !important;}
         .stAppDeployButton {display: none !important;}
         
-        /* 3. LEPÍCÍ LIŠTA (Sticky Header) - BEZPEČNÁ METODA */
-        /* Toto zaručí, že horní tlačítka zůstanou nahoře, ale nepřekryjí obsah */
+        /* 3. LEPÍCÍ LIŠTA (Sticky Header) */
+        /* Toto drží logo a tlačítka nahoře při skrolování */
         div[data-testid="stVerticalBlock"] > div:first-child {
             position: sticky;
             top: 0;
             z-index: 999;
             background-color: #000000;
-            padding-top: 10px;
-            padding-bottom: 10px;
+            padding-top: 15px;
+            padding-bottom: 15px;
             border-bottom: 1px solid #333;
         }
 
@@ -44,12 +44,20 @@ st.markdown("""
             color: #E0E0E0 !important;
         }
 
-        /* 5. TLAČÍTKA - HLAVNÍ DESIGN (ZELENÝ RÁMEČEK) */
-        /* Platí pro Login, Get Started i Logo */
+        /* 5. LOGO (Jen text, žádné tlačítko) */
+        .nav-logo-text {
+            font-size: 24px;
+            font-weight: 900;
+            color: #E0E0E0 !important;
+            margin-top: 5px; /* Zarovnání s tlačítkem vpravo */
+            display: inline-block;
+        }
+
+        /* 6. TLAČÍTKA (ZELENÝ RÁMEČEK) */
         .stButton > button {
             background-color: #000000 !important;
             color: #00FF00 !important;
-            border: 1px solid #00FF00 !important;  /* ZELENÝ RÁMEČEK */
+            border: 1px solid #00FF00 !important;
             border-radius: 0px !important;
             font-family: 'Courier New', Courier, monospace !important;
             text-transform: uppercase;
@@ -58,31 +66,15 @@ st.markdown("""
             width: 100%;
         }
         
-        /* EFEKT PŘI NAJETÍ MYŠÍ (VÝPLŇ) */
         .stButton > button:hover {
             background-color: #00FF00 !important;
             color: #000000 !important;
             box-shadow: 0 0 10px #00FF00;
         }
-        
-        /* 6. SPECIÁLNÍ ÚPRAVA PRO LOGO (Aby vypadalo víc jako text vlevo) */
-        /* Cílíme na první tlačítko na stránce (Logo) */
-        div[data-testid="column"]:nth-of-type(1) .stButton > button {
-            border: none !important; 
-            text-align: left;
-            font-size: 20px;
-            background-color: transparent !important;
-            padding-left: 0;
-        }
-        div[data-testid="column"]:nth-of-type(1) .stButton > button:hover {
-            background-color: transparent !important;
-            color: #FFFFFF !important;
-            box-shadow: none !important;
-        }
 
         /* 7. KARTY (BOXÍKY) */
         .paid-box {
-            border: 1px solid #00FF00 !important; /* Zelený box pro PAID */
+            border: 1px solid #00FF00 !important;
             padding: 20px;
             margin-bottom: 10px;
             background-color: #0a0a0a;
@@ -98,7 +90,7 @@ st.markdown("""
             height: 100%;
         }
 
-        /* 8. VSTUPNÍ POLE (INPUTY) */
+        /* 8. VSTUPNÍ POLE */
         input {
             background-color: #111 !important;
             color: white !important;
@@ -126,9 +118,8 @@ def get_data(file_key):
     return pd.DataFrame()
 
 # -------------------------
-# 3. PŘIHLAŠOVÁNÍ (AUTHENTICATOR)
+# 3. PŘIHLAŠOVÁNÍ
 # -------------------------
-# Inicializace session state, aby aplikace nepadala
 if 'authentication_status' not in st.session_state:
     st.session_state['authentication_status'] = None
 if 'username' not in st.session_state:
@@ -141,13 +132,11 @@ hashed_passwords = [
     '$2b$12$t3n1S7pC2pP7tKjO9XbH9OqT3yGgY7Xw8tW1wG7p8r'  # guest123
 ]
 
-# Změna názvu cookie na 'v9' (Resetuje problémy s přihlášením)
 authenticator = stauth.Authenticate(
     names, usernames, hashed_passwords,
-    'fundamenticks_cookie_v9', 'random_key_v9', cookie_expiry_days=1
+    'fundamenticks_cookie_v10', 'random_key_v10', cookie_expiry_days=1
 )
 
-# Navigace
 if 'page' not in st.session_state: st.session_state['page'] = 'landing'
 if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'watchlist'
 
@@ -156,18 +145,14 @@ if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'watch
 # -------------------------
 
 def render_navbar():
-    """Horní lišta (Sticky Header)"""
-    # Vytvoříme sloupce přímo pro tlačítka
+    """Horní lišta s textovým logem a tlačítkem vpravo"""
     c1, c2, c3 = st.columns([3, 5, 2])
     
     with c1:
-        # Logo Tlačítko (Funguje jako Domů)
-        if st.button("> FUNDAMENTICKS_", key="nav_logo"):
-            st.session_state['page'] = 'landing'
-            st.rerun()
+        # Tady je změna: Místo tlačítka je to obyčejný text (HTML)
+        st.markdown('<div class="nav-logo-text">> FUNDAMENTICKS_</div>', unsafe_allow_html=True)
             
     with c3:
-        # Login / Logout tlačítko
         if st.session_state.get('authentication_status'):
              if st.button("LOGOUT"):
                  authenticator.logout('LOGOUT', 'main')
@@ -177,14 +162,18 @@ def render_navbar():
                 st.rerun()
 
 def render_landing():
+    # Mezera pod lištou
     st.write("")
+    st.write("")
+    
     col_head_1, col_head_2 = st.columns([3,1])
     with col_head_1:
         st.markdown("<h1>SYSTEM STATUS: <span style='color:#00FF00'>ONLINE</span></h1>", unsafe_allow_html=True)
-
-    st.markdown("---")
     
+    # TADY BYLA TA ČÁRA (st.markdown("---")) - SMAZAL JSEM JI
+
     # VLASTNOSTI (FEATURES)
+    st.write("") # Jen malá mezera
     c1, c2, c3 = st.columns(3)
     
     with c1:
@@ -217,11 +206,9 @@ def render_landing():
     st.markdown("---")
     st.markdown("<h3><center>ACCESS LEVELS</center></h3>", unsafe_allow_html=True)
 
-    # Sekce Access Levels s tlačítky pod sebou
     col_free, col_paid = st.columns(2)
     
     with col_free:
-        # Box
         st.markdown("""
         <div class="feature-box" style="text-align:center">
             <h3 style="color:white">TIER: FREE</h3>
@@ -232,13 +219,11 @@ def render_landing():
             </ul>
         </div>
         """, unsafe_allow_html=True)
-        # Tlačítko pod boxem (Zelený rámeček díky CSS)
         if st.button("GET STARTED (FREE)", key="btn_free"):
             st.session_state['page'] = 'login'
             st.rerun()
         
     with col_paid:
-        # Box (Zelený rámeček)
         st.markdown("""
         <div class="paid-box" style="text-align:center">
             <h3 style="color:#00FF00">TIER: PAID (ADMIN)</h3>
@@ -250,7 +235,6 @@ def render_landing():
             </ul>
         </div>
         """, unsafe_allow_html=True)
-        # Tlačítko pod boxem (Zelený rámeček díky CSS)
         if st.button("GET STARTED (PAID)", key="btn_paid"):
             st.session_state['page'] = 'login'
             st.rerun()
@@ -293,7 +277,6 @@ def render_login_page():
 def render_dashboard():
     user_status = 'PAID' if st.session_state["username"] == 'admin' else 'FREE'
     
-    # SIDEBAR
     with st.sidebar:
         st.markdown(f"### USER: {st.session_state['username'].upper()}")
         st.markdown(f"### TIER: <span style='color:{'#00FF00' if user_status=='PAID' else 'white'}'>{user_status}</span>", unsafe_allow_html=True)
@@ -301,10 +284,8 @@ def render_dashboard():
         if st.button("> WATCHLIST"): st.session_state['active_tab'] = 'watchlist'; st.rerun()
         if st.button("> CURRENCY HUB"): st.session_state['active_tab'] = 'currency'; st.rerun()
         st.markdown("---")
-        # Logout handled by library logic
         authenticator.logout('LOGOUT', 'main')
 
-    # MAIN CONTENT
     st.markdown(f"<h2>MODULE: {st.session_state['active_tab'].upper()}</h2>", unsafe_allow_html=True)
     st.markdown("---")
 
@@ -357,7 +338,6 @@ def render_dashboard():
 # -------------------------
 # 5. HLAVNÍ KONTROLER
 # -------------------------
-# Vykreslit lištu na každé stránce
 render_navbar()
 
 if st.session_state.get('authentication_status'):
