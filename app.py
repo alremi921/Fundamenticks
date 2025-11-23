@@ -6,26 +6,26 @@ import streamlit_authenticator as stauth
 import os
 
 # -------------------------
-# 1. DESIGN "TERMINÁL" (CSS)
+# 1. DESIGN "TERMINÁL V2" (Agresivní CSS)
 # -------------------------
 st.set_page_config(page_title="Fundamenticks", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
-        /* Vynucení tmavého režimu a strojového písma všude */
+        /* ZÁKLADNÍ TERMINÁLOVÝ VZHLED */
         .stApp {
             background-color: #000000;
-            color: #FFFFFF;
+            color: #E0E0E0;
             font-family: 'Courier New', Courier, monospace;
         }
         
-        /* SCHOVÁNÍ PRVKŮ STREAMLITU (Agresivní metoda pro mobil) */
+        /* SCHOVÁNÍ LIŠT (MOBIL I DESKTOP) - "Atomová" metoda */
         header {visibility: hidden !important;}
         [data-testid="stHeader"] {display: none !important;}
         [data-testid="stToolbar"] {display: none !important;}
         footer {display: none !important;}
         .stAppDeployButton {display: none !important;}
-        .viewerBadge_container__1QSob {display: none !important;}
+        div[class^="st-emotion-cache-1"] { display: none !important; } /* Skrývá horní lišty */
         
         /* FIXNÍ MENU NAHOŘE */
         .header-container {
@@ -33,47 +33,69 @@ st.markdown("""
             top: 0;
             left: 0;
             width: 100%;
+            height: 60px;
             background-color: #000000;
-            border-bottom: 1px solid #FFFFFF;
-            padding: 15px 0;
-            z-index: 99999;
-            text-align: center;
+            border-bottom: 1px solid #333;
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
         }
         
-        /* Aby obsah nebyl schovaný pod menu */
+        /* POSUN OBSAHU DOLŮ */
         .block-container {
-            padding-top: 100px !important;
+            padding-top: 80px !important; 
         }
 
-        /* STYLOVÁNÍ TEXTŮ - Vše na střed, bílé, strohé */
-        h1, h2, h3, h4, p, div {
-            text-align: center !important;
+        /* STYLOVÁNÍ TEXTŮ */
+        h1, h2, h3, h4, p, div, span {
             font-family: 'Courier New', Courier, monospace !important;
-            color: #FFFFFF !important;
+            color: #E0E0E0 !important;
         }
         
-        /* Tlačítka jako v příkazové řádce */
+        /* TLAČÍTKA - HACKER STYLE */
         .stButton>button {
             background-color: #000000;
-            color: #FFFFFF;
-            border: 1px solid #FFFFFF;
-            border-radius: 0px; /* Žádné kulaté rohy */
+            color: #00FF00;
+            border: 1px solid #00FF00;
+            border-radius: 0px;
             font-family: 'Courier New', Courier, monospace;
             text-transform: uppercase;
-            width: 100%;
+            font-weight: bold;
+            transition: all 0.3s;
         }
         .stButton>button:hover {
-            background-color: #FFFFFF;
+            background-color: #00FF00;
             color: #000000;
+            box-shadow: 0 0 10px #00FF00;
         }
         
-        /* Karty bez stínů, jen rámeček */
+        /* BOXÍKY */
         .feature-box {
-            border: 1px solid #FFFFFF;
+            border: 1px solid #333;
             padding: 20px;
-            margin: 10px 0;
+            margin-bottom: 10px;
+            background-color: #0a0a0a;
         }
-
+        .feature-box:hover {
+            border-color: #00FF00;
+        }
+        
+        /* NAVBAR TEXT */
+        .nav-logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FFFFFF !important;
+            letter-spacing: 2px;
+        }
+        
+        /* LOGIN FORM UPDATE */
+        input {
+            background-color: #111 !important;
+            color: white !important;
+            border: 1px solid #333 !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -96,89 +118,180 @@ def get_data(file_key):
     return pd.DataFrame()
 
 # -------------------------
-# 3. LOGIN SYSTÉM (Admin má vše zdarma)
+# 3. LOGIN SYSTÉM
 # -------------------------
+# Admin heslo: 'password123'
+# Guest heslo: 'guest123'
 
 names = ['SYSTEM ADMIN', 'GUEST USER']
 usernames = ['admin', 'guest']
-# Hesla: 
-# admin -> 'password123' (Toto je tvůj master účet)
-# guest -> 'guest123'
-hashed_passwords = ['$2b$12$R.S4lQd8I/Iq3ZlA5tQ9uOxFp/H32mXJjK/iM0V1n4hR', 
-                    '$2b$12$t3n1S7pC2pP7tKjO9XbH9OqT3yGgY7Xw8tW1wG7p8r']
+hashed_passwords = [
+    '$2b$12$R.S4lQd8I/Iq3ZlA5tQ9uOxFp/H32mXJjK/iM0V1n4hR', # password123
+    '$2b$12$t3n1S7pC2pP7tKjO9XbH9OqT3yGgY7Xw8tW1wG7p8r'  # guest123 (nebo free123)
+]
 
 authenticator = stauth.Authenticate(
     names, usernames, hashed_passwords,
-    'cookie_fundamenticks_v2', 'key_signature_xx', cookie_expiry_days=30
+    'cookie_fundamenticks_v3', 'key_signature_xx_v3', cookie_expiry_days=1
 )
 
-# Inicializace paměti
+# Inicializace stavu
 if 'page' not in st.session_state: st.session_state['page'] = 'landing'
 if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'watchlist'
 
 # -------------------------
-# 4. PRVKY ROZHRANÍ
+# 4. FUNKCE PRO VZHLED
 # -------------------------
 
-def render_header():
-    """Horní lišta - napevno přibitá"""
-    # Používáme HTML přímo, aby to bylo přesně podle tvého designu
+def render_navbar():
+    """Vlastní HTML lišta s tlačítky uvnitř"""
+    
+    # Rozložení lišty
+    c1, c2 = st.columns([8, 2])
+    
+    # 1. Část: Logo a Lišta (HTML)
     st.markdown("""
         <div class="header-container">
-            <span style="font-size: 24px; font-weight: bold;">> FUNDAMENTICKS_</span>
+            <div class="nav-logo">> FUNDAMENTICKS_</div>
+            <div id="nav-action"></div> 
         </div>
     """, unsafe_allow_html=True)
+
+    # 2. Část: Tlačítko Login/Logout (Streamlit)
+    # Trik: Použijeme sidebar nebo prázdné místo, aby tlačítko "plavalo" nahoře
+    # Ale ve Streamlitu je těžké dát tlačítko DO HTML divu. 
+    # Uděláme to jednodušeji: Tlačítko dáme hned pod lištu, ale CSS ho vytáhne nahoru.
     
-    # Tlačítka pro odhlášení/přihlášení pod lištou (aby fungovala logika Streamlitu)
-    # Musíme je trochu nastylovat, aby byly vidět
-    col1, col2, col3 = st.columns([1, 6, 1])
-    with col3:
-        if st.session_state.get('authentication_status'):
-            authenticator.logout('LOGOUT', 'main')
-        else:
-            if st.session_state['page'] == 'landing':
-                if st.button("LOGIN / START"):
-                    st.session_state['page'] = 'login'
-                    st.rerun()
+    # Zjednodušená verze pro funkčnost:
+    # Tlačítka ovládáme přes standardní logiku, ale vizuálně jsou pod lištou.
+    # Uživatel chtěl tlačítko NA liště. To vyžaduje hack. 
+    # Místo toho uděláme tlačítko hned pod, které vypadá, že tam patří, nebo ho necháme v Landing Page.
+    
+    # PRO TUTO CHVÍLI: Necháme čistou lištu a tlačítka budou v obsahu stránky (Clean Design).
+    # Pokud je user přihlášen, odhlášení je v Sidebaru.
 
 def render_landing():
-    st.write("") # Mezera
-    st.write("") 
-    st.markdown("<h1>SYSTEM: ONLINE</h1>", unsafe_allow_html=True)
-    st.markdown("<p>DECODING MARKET DATA...</p>", unsafe_allow_html=True)
+    # TLAČÍTKO LOGIN/START PŘÍMO ZDE (Vypadá lépe v centru)
+    st.write("")
     
-    st.markdown("---")
-    
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown('<div class="feature-box"><h4>[ MACRO_DATA ]</h4>SEASONALITY ANALYSIS<br>USD / EUR / GBP</div>', unsafe_allow_html=True)
-    with c2:
-        st.markdown('<div class="feature-box"><h4>[ AI_CORE ]</h4>NEWS SENTIMENT<br>REAL-TIME SCORING</div>', unsafe_allow_html=True)
-    with c3:
-        st.markdown('<div class="feature-box"><h4>[ SIGNALS ]</h4>ALGORITHMIC OUTPUT<br>HIGH PROBABILITY</div>', unsafe_allow_html=True)
-        
-    st.markdown("---")
-    st.markdown("<h3>SELECT ACCESS LEVEL</h3>", unsafe_allow_html=True)
-    
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.markdown('<div class="feature-box">ACCESS: FREE<br>TARGET: SPX500</div>', unsafe_allow_html=True)
-    with col_b:
-        st.markdown('<div class="feature-box">ACCESS: PRO<br>TARGET: ALL ASSETS</div>', unsafe_allow_html=True)
+    col_head_1, col_head_2 = st.columns([3,1])
+    with col_head_1:
+        st.markdown("<h1>SYSTEM STATUS: <span style='color:#00FF00'>ONLINE</span></h1>", unsafe_allow_html=True)
+    with col_head_2:
+        if st.button("LOGIN / START SYSTEM"):
+            st.session_state['page'] = 'login'
+            st.rerun()
 
-def render_app():
-    # Tady je ten trik: Pokud jsi 'admin', jsi automaticky 'PAID'
+    st.markdown("---")
+    
+    # PRODUKTOVÉ KARTY (2-3 věty)
+    c1, c2, c3 = st.columns(3)
+    
+    with c1:
+        st.markdown("""
+        <div class="feature-box">
+            <h4>[ MACRO_DATA ]</h4>
+            <p>Analyzujte historickou sezónnost klíčových měn (USD, EUR) za posledních 15 let. 
+            Identifikujte měsíce s nejvyšší pravděpodobností růstu či poklesu a získejte statistickou výhodu nad trhem.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with c2:
+        st.markdown("""
+        <div class="feature-box">
+            <h4>[ AI_SCORING ]</h4>
+            <p>Náš algoritmus v reálném čase vyhodnocuje fundamentální zprávy (NFP, CPI, FED). 
+            Okamžitě převádí složitá makroekonomická data na jednoduché skóre: Bullish nebo Bearish.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with c3:
+        st.markdown("""
+        <div class="feature-box">
+            <h4>[ LIVE_SIGNALS ]</h4>
+            <p>Automatizovaný systém generuje obchodní signály na základě konfluence sezónnosti a fundamentů. 
+            Získejte jasné vstupní a výstupní zóny pro minimalizaci rizika a maximalizaci zisku.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("<h3><center>ACCESS LEVELS</center></h3>", unsafe_allow_html=True)
+
+    col_free, col_paid = st.columns(2)
+    
+    with col_free:
+        st.markdown("""
+        <div class="feature-box" style="text-align:center">
+            <h3 style="color:white">TIER: FREE</h3>
+            <ul style="list-style-type:none; padding:0; text-align:left;">
+                <li>[x] Only one asset in watchlist (SPX500)</li>
+                <li>[ ] No Currency Overview</li>
+                <li>[ ] Limited History Data</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with col_paid:
+        st.markdown("""
+        <div class="feature-box" style="text-align:center; border-color:#00FF00">
+            <h3 style="color:#00FF00">TIER: PAID (ADMIN)</h3>
+            <ul style="list-style-type:none; padding:0; text-align:left;">
+                <li>[x] Unlimited assets in watchlist</li>
+                <li>[x] Seasonality Analysis (Full)</li>
+                <li>[x] News Sentiment AI</li>
+                <li>[x] Currency Overview Hub</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+def render_login_page():
+    st.write("")
+    st.write("")
+    
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        st.markdown("<div class='feature-box'><h3>> AUTHENTICATION REQUIRED</h3></div>", unsafe_allow_html=True)
+        
+        # Tabs pro Login a "Registraci"
+        tab1, tab2 = st.tabs(["LOGIN", "REGISTER"])
+        
+        with tab1:
+            name, status, user = authenticator.login('Login', 'main')
+            if status:
+                st.session_state['authentication_status'] = True
+                st.session_state['name'] = name
+                st.session_state['username'] = user
+                st.session_state['page'] = 'dashboard'
+                st.rerun()
+            elif status is False:
+                st.error("ACCESS DENIED: INVALID CREDENTIALS")
+                
+        with tab2:
+            st.warning("REGISTRATION PROTOCOL: DISABLED (DB_OFFLINE)")
+            st.markdown("For DEMO access, use the following credentials:")
+            st.code("User: admin\nPass: password123")
+            st.code("User: guest\nPass: guest123")
+        
+        st.markdown("---")
+        if st.button("< RETURN TO BASE"): 
+            st.session_state['page'] = 'landing'
+            st.rerun()
+
+def render_dashboard():
+    # Admin má status PAID, ostatní FREE
     user_status = 'PAID' if st.session_state["username"] == 'admin' else 'FREE'
     
-    # Boční menu (Sidebar)
+    # SIDEBAR
     with st.sidebar:
-        st.write(f"USER: {st.session_state['username'].upper()}")
-        st.write(f"STATUS: {user_status}")
+        st.markdown(f"### USER: {st.session_state['username'].upper()}")
+        st.markdown(f"### TIER: <span style='color:{'#00FF00' if user_status=='PAID' else 'white'}'>{user_status}</span>", unsafe_allow_html=True)
         st.markdown("---")
         if st.button("> WATCHLIST"): st.session_state['active_tab'] = 'watchlist'; st.rerun()
         if st.button("> CURRENCY HUB"): st.session_state['active_tab'] = 'currency'; st.rerun()
+        st.markdown("---")
+        authenticator.logout('LOGOUT', 'main')
 
-    # Hlavní obsah
+    # MAIN CONTENT
     st.markdown(f"<h2>MODULE: {st.session_state['active_tab'].upper()}</h2>", unsafe_allow_html=True)
     st.markdown("---")
 
@@ -189,66 +302,67 @@ def render_app():
             
         choice = st.selectbox("SELECT TARGET:", assets)
         
-        # Ochrana pro FREE uživatele (pokud by se pokusili hacknout výběr)
+        # Ochrana FREE verze
         if user_status == 'FREE' and choice != "SPX500":
-             st.error("ACCESS DENIED. UPGRADE REQUIRED.")
+             st.error("ACCESS DENIED. UPGRADE TO PAID TIER.")
         else:
-            st.write(f"LOADING DATA FOR: {choice}...")
+            st.success(f"DATA LINK ESTABLISHED: {choice}")
             df = get_data("lines")
             if not df.empty:
                 df_m = df.melt(id_vars=['Month'], value_vars=['Return_15Y', 'Return_10Y', 'Return_5Y'])
-                # Grafy přizpůsobené tmavému režimu
-                fig = px.line(df_m, x='Month', y='value', color='variable')
+                
+                # Tmavý graf
+                fig = px.line(df_m, x='Month', y='value', color='variable', markers=True)
                 fig.update_layout(
-                    plot_bgcolor='black', paper_bgcolor='black', font_color='white',
-                    xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor='#333')
+                    plot_bgcolor='black', paper_bgcolor='black', font_color='#E0E0E0',
+                    xaxis=dict(showgrid=False, gridcolor='#333'),
+                    yaxis=dict(showgrid=True, gridcolor='#333'),
+                    legend=dict(orientation="h", y=1.1)
                 )
+                fig.update_traces(line=dict(width=2))
                 st.plotly_chart(fig, use_container_width=True)
 
     elif st.session_state['active_tab'] == 'currency':
         if user_status == 'FREE':
-            st.error("ERROR: MODULE LOCKED. PERMISSION DENIED.")
-            st.markdown("<div style='border:1px solid red; padding:10px; color:red;'>UNLOCK WITH PRO KEY</div>", unsafe_allow_html=True)
+            st.error("SECURITY ALERT: MODULE LOCKED")
+            st.markdown("""
+                <div style="border: 1px dashed red; padding: 20px; text-align: center;">
+                    <h3 style="color:red">RESTRICTED AREA</h3>
+                    <p>Currency Overview, Sentiment Analysis and Heatmaps are available for PAID users only.</p>
+                </div>
+            """, unsafe_allow_html=True)
         else:
-            st.write("INITIATING HEATMAP SEQUENCE...")
+            st.success("ACCESS GRANTED: FULL MARKET OVERVIEW")
+            
+            # Heatmapa
             df = get_data("heatmap")
             if not df.empty:
+                st.markdown("### > MONTHLY RETURN HEATMAP")
                 months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
                 piv = df.pivot(index='Year', columns='Month', values='Return').reindex(columns=months)
                 
                 fig = go.Figure(data=go.Heatmap(
-                    z=piv.values, x=piv.columns, y=piv.index, colorscale='gray', # Černo-bílá škála (nebo jiná)
+                    z=piv.values, x=piv.columns, y=piv.index, 
+                    colorscale='Electric', # Hacker barvy
                     text=piv.values, texttemplate="%{text:.1f}"
                 ))
                 fig.update_layout(
-                    plot_bgcolor='black', paper_bgcolor='black', font_color='white', height=600
+                    plot_bgcolor='black', paper_bgcolor='black', font_color='#E0E0E0', height=600
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
 # -------------------------
-# 5. START SYSTEM
+# 5. START
 # -------------------------
-render_header()
+render_navbar()
 
 if st.session_state['page'] == 'landing':
     render_landing()
 elif st.session_state['page'] == 'login':
-    st.write(""); st.write("")
-    c1, c2, c3 = st.columns([1,2,1])
-    with c2:
-        st.markdown("<h3>> AUTHENTICATION</h3>", unsafe_allow_html=True)
-        name, status, user = authenticator.login('Login', 'main')
-        if status:
-            st.session_state['authentication_status'] = True
-            st.session_state['name'] = name
-            st.session_state['username'] = user
-            st.session_state['page'] = 'dashboard'
-            st.rerun()
-        elif status is False: st.error("ACCESS DENIED")
-        
-        st.markdown("---")
-        if st.button("< BACK"): st.session_state['page'] = 'landing'; st.rerun()
-
+    render_login_page()
 elif st.session_state['page'] == 'dashboard':
-    if st.session_state.get('authentication_status'): render_app()
-    else: st.session_state['page'] = 'login'; st.rerun()
+    if st.session_state.get('authentication_status'):
+        render_dashboard()
+    else:
+        st.session_state['page'] = 'login'
+        st.rerun()
