@@ -4,9 +4,10 @@ import plotly.graph_objects as go
 import plotly.express as px
 import streamlit_authenticator as stauth
 import os
+import time
 
 # -------------------------
-# 1. DESIGN "TERMINAL V4" (Fixed Borders & Login)
+# 1. DESIGN "TERMINAL V5" (Final Polish)
 # -------------------------
 st.set_page_config(page_title="Fundamenticks", layout="wide", initial_sidebar_state="collapsed")
 
@@ -38,7 +39,6 @@ st.markdown("""
             z-index: 999999;
             display: flex;
             align-items: center;
-            justify-content: space-between;
             padding: 0 20px;
         }
         
@@ -53,24 +53,27 @@ st.markdown("""
             color: #E0E0E0 !important;
         }
         
-        /* BUTTONS - GREEN HOVER EFFECT (KEPT) */
+        /* STANDARD BUTTONS (Simple, clean) */
         .stButton>button {
             background-color: #000000;
-            color: #00FF00;
-            border: 1px solid #00FF00;
+            color: #E0E0E0;
+            border: 1px solid #555;
             border-radius: 0px;
             font-family: 'Courier New', Courier, monospace;
             text-transform: uppercase;
             font-weight: bold;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
         .stButton>button:hover {
-            background-color: #00FF00;
-            color: #000000;
-            box-shadow: 0 0 10px #00FF00;
+            border-color: #FFFFFF;
+            color: #FFFFFF;
         }
         
-        /* BOXES - NO HOVER EFFECT ANYMORE */
+        /* SPECIAL "ACTION" BUTTONS (Green Highlight) - Login buttons mainly */
+        /* We rely on Streamlit's default class order, hard to target specific buttons without keys in CSS */
+        /* So we keep a general clean style, and the PAID box gets the green border */
+
+        /* BOXES */
         .feature-box {
             border: 1px solid #333;
             padding: 20px;
@@ -79,21 +82,22 @@ st.markdown("""
             height: 100%;
         }
         
-        /* SPECIAL CLASS FOR PAID TIER (ALWAYS GREEN) */
+        /* PAID TIER BOX (Green Border) */
         .paid-box {
             border: 1px solid #00FF00 !important;
             padding: 20px;
             margin-bottom: 10px;
             background-color: #0a0a0a;
-            box-shadow: 0 0 5px rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.05);
         }
         
-        /* NAVBAR LOGO */
-        .nav-logo {
+        /* LOGO BUTTON STYLE (Invisible button over text) */
+        div[data-testid="stHorizontalBlock"] button[kind="secondary"] {
+            border: none;
+            background: none;
             font-size: 20px;
-            font-weight: bold;
-            color: #FFFFFF !important;
-            letter-spacing: 2px;
+            text-align: left;
+            padding: 0;
         }
 
         /* INPUT FIELDS */
@@ -126,8 +130,7 @@ def get_data(file_key):
 # -------------------------
 # 3. AUTHENTICATION & SESSION
 # -------------------------
-# Fixing the login memory issue by checking session state explicitly
-
+# Fix: Ensure session state is initialized before anything else
 if 'authentication_status' not in st.session_state:
     st.session_state['authentication_status'] = None
 if 'username' not in st.session_state:
@@ -140,9 +143,10 @@ hashed_passwords = [
     '$2b$12$t3n1S7pC2pP7tKjO9XbH9OqT3yGgY7Xw8tW1wG7p8r'  # guest123
 ]
 
+# Cookie name changed to 'v7' to force reset on browser
 authenticator = stauth.Authenticate(
     names, usernames, hashed_passwords,
-    'fundamenticks_cookie_v5', 'random_key_v5', cookie_expiry_days=0
+    'fundamenticks_cookie_v7', 'random_key_v7', cookie_expiry_days=1
 )
 
 # Navigation State
@@ -154,13 +158,25 @@ if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'watch
 # -------------------------
 
 def render_navbar():
-    """Fixed Top Bar"""
-    st.markdown("""
-        <div class="header-container">
-            <div class="nav-logo">> FUNDAMENTICKS_</div>
-            <div></div>
-        </div>
-    """, unsafe_allow_html=True)
+    """Navbar with clickable Logo"""
+    # To make the logo clickable, we use columns and a button that looks like text
+    # We place this INSIDE the fixed container via CSS hacking or just at the top
+    
+    # Simple Streamlit approach that works:
+    # We render a button at the very top. CSS moves it or styles it.
+    
+    # Since we want it fixed, we use the HTML header for the background
+    st.markdown('<div class="header-container"></div>', unsafe_allow_html=True)
+    
+    # And we place the controls "on top" visually using columns
+    # We need to adjust padding in CSS to make this align with the fixed header
+    
+    col1, col2 = st.columns([8, 2])
+    with col1:
+        # This button acts as the Logo Home Link
+        if st.button("> FUNDAMENTICKS_", key="nav_home", type="secondary"):
+            st.session_state['page'] = 'landing'
+            st.rerun()
 
 def render_landing():
     # Header Status
@@ -175,7 +191,7 @@ def render_landing():
 
     st.markdown("---")
     
-    # PRODUCT FEATURES (English)
+    # PRODUCT FEATURES
     c1, c2, c3 = st.columns(3)
     
     with c1:
@@ -183,7 +199,7 @@ def render_landing():
         <div class="feature-box">
             <h4>[ MACRO_DATA ]</h4>
             <p>Analyze historical seasonality of key currencies (USD, EUR) over the last 15 years. 
-            Identify months with the highest probability of growth or decline and gain a statistical edge.</p>
+            Identify months with the highest probability of growth or decline.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -211,6 +227,7 @@ def render_landing():
     col_free, col_paid = st.columns(2)
     
     with col_free:
+        # FREE COLUMN
         st.markdown("""
         <div class="feature-box" style="text-align:center">
             <h3 style="color:white">TIER: FREE</h3>
@@ -221,9 +238,13 @@ def render_landing():
             </ul>
         </div>
         """, unsafe_allow_html=True)
+        # Button inside the column
+        if st.button("GET STARTED", key="btn_free"):
+            st.session_state['page'] = 'login'
+            st.rerun()
         
     with col_paid:
-        # This one gets the special .paid-box class with the GREEN BORDER
+        # PAID COLUMN (Green Border Box)
         st.markdown("""
         <div class="paid-box" style="text-align:center">
             <h3 style="color:#00FF00">TIER: PAID (ADMIN)</h3>
@@ -235,12 +256,8 @@ def render_landing():
             </ul>
         </div>
         """, unsafe_allow_html=True)
-
-    # GET STARTED BUTTON (Centers the flow)
-    st.write("")
-    c_btn1, c_btn2, c_btn3 = st.columns([1, 2, 1])
-    with c_btn2:
-        if st.button("GET STARTED >>", use_container_width=True):
+        # Button inside the column
+        if st.button("GET STARTED", key="btn_paid"):
             st.session_state['page'] = 'login'
             st.rerun()
 
@@ -256,9 +273,12 @@ def render_login_page():
         
         with tab1:
             # Login widget
-            name, status, user = authenticator.login('Login', 'main')
-            
-            # Logic to handle login success immediately
+            try:
+                name, status, user = authenticator.login('Login', 'main')
+            except Exception as e:
+                st.error(f"System Error: {e}")
+                status = False
+
             if status:
                 st.session_state['authentication_status'] = True
                 st.session_state['name'] = name
@@ -355,14 +375,15 @@ def render_dashboard():
 # -------------------------
 render_navbar()
 
-# If user is logged in via cookie/session, go straight to dashboard
+# Login persistence check
 if st.session_state.get('authentication_status'):
     render_dashboard()
 else:
-    # Router for non-logged users
     if st.session_state['page'] == 'landing':
         render_landing()
     elif st.session_state['page'] == 'login':
         render_login_page()
     else:
-        render_landing()
+        # Fallback
+        st.session_state['page'] = 'landing'
+        st.rerun()
