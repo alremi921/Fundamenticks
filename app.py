@@ -6,54 +6,50 @@ import streamlit_authenticator as stauth
 import os
 
 # -------------------------
-# 1. DESIGN "TERMINAL V6" (Green Borders Everywhere)
+# 1. DESIGN "TERMINAL V7" (STABLE & GREEN)
 # -------------------------
 st.set_page_config(page_title="Fundamenticks", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
-        /* BASIC TERMINAL STYLE */
+        /* 1. ZÁKLADNÍ MATRIX STYL */
         .stApp {
             background-color: #000000;
             color: #E0E0E0;
             font-family: 'Courier New', Courier, monospace;
         }
         
-        /* HIDE STREAMLIT UI */
+        /* 2. SCHOVÁNÍ VĚCÍ OD STREAMLITU */
         header {visibility: hidden !important;}
         [data-testid="stHeader"] {display: none !important;}
         [data-testid="stToolbar"] {display: none !important;}
         footer {display: none !important;}
         .stAppDeployButton {display: none !important;}
         
-        /* FIXED NAVBAR BACKGROUND */
-        .header-bg {
-            position: fixed;
+        /* 3. LEPÍCÍ LIŠTA (Sticky Header) - BEZPEČNÁ METODA */
+        /* Toto zaručí, že horní tlačítka zůstanou nahoře, ale nepřekryjí obsah */
+        div[data-testid="stVerticalBlock"] > div:first-child {
+            position: sticky;
             top: 0;
-            left: 0;
-            width: 100%;
-            height: 70px;
+            z-index: 999;
             background-color: #000000;
+            padding-top: 10px;
+            padding-bottom: 10px;
             border-bottom: 1px solid #333;
-            z-index: 99999;
         }
-        
-        /* MOVE CONTENT DOWN */
-        .block-container {
-            padding-top: 90px !important; 
-        }
-        
-        /* TEXT STYLING */
+
+        /* 4. TEXTY */
         h1, h2, h3, h4, p, div, span, li, ul {
             font-family: 'Courier New', Courier, monospace !important;
             color: #E0E0E0 !important;
         }
 
-        /* --- HLAVNÍ DESIGN TLAČÍTEK (ZELENÝ OBDELNÍK) --- */
+        /* 5. TLAČÍTKA - HLAVNÍ DESIGN (ZELENÝ RÁMEČEK) */
+        /* Platí pro Login, Get Started i Logo */
         .stButton > button {
             background-color: #000000 !important;
             color: #00FF00 !important;
-            border: 1px solid #00FF00 !important;  /* Ten zelený rámeček */
+            border: 1px solid #00FF00 !important;  /* ZELENÝ RÁMEČEK */
             border-radius: 0px !important;
             font-family: 'Courier New', Courier, monospace !important;
             text-transform: uppercase;
@@ -62,33 +58,35 @@ st.markdown("""
             width: 100%;
         }
         
-        /* EFEKT PŘI NAJETÍ MYŠÍ (ZEZELENÁ) */
+        /* EFEKT PŘI NAJETÍ MYŠÍ (VÝPLŇ) */
         .stButton > button:hover {
             background-color: #00FF00 !important;
             color: #000000 !important;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+            box-shadow: 0 0 10px #00FF00;
         }
         
-        /* SPECIÁLNÍ ÚPRAVA PRO LOGO TLAČÍTKO V LIŠTĚ (Aby vypadalo víc jako text) */
+        /* 6. SPECIÁLNÍ ÚPRAVA PRO LOGO (Aby vypadalo víc jako text vlevo) */
+        /* Cílíme na první tlačítko na stránce (Logo) */
         div[data-testid="column"]:nth-of-type(1) .stButton > button {
-            border: none !important; /* Bez rámečku */
+            border: none !important; 
             text-align: left;
             font-size: 20px;
             background-color: transparent !important;
+            padding-left: 0;
         }
         div[data-testid="column"]:nth-of-type(1) .stButton > button:hover {
             background-color: transparent !important;
-            color: #FFFFFF !important; /* Při najetí zcelechá */
+            color: #FFFFFF !important;
             box-shadow: none !important;
         }
 
-        /* PAID TIER BOX (Green Glow) */
+        /* 7. KARTY (BOXÍKY) */
         .paid-box {
-            border: 1px solid #00FF00 !important;
+            border: 1px solid #00FF00 !important; /* Zelený box pro PAID */
             padding: 20px;
             margin-bottom: 10px;
             background-color: #0a0a0a;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.1);
             height: 100%;
         }
         
@@ -100,29 +98,17 @@ st.markdown("""
             height: 100%;
         }
 
-        /* INPUT FIELDS */
+        /* 8. VSTUPNÍ POLE (INPUTY) */
         input {
             background-color: #111 !important;
             color: white !important;
             border: 1px solid #333 !important;
         }
-        
-        /* NAVBAR POSITIONING HACK */
-        /* This moves the first row of Streamlit columns (our navbar) to the top fixed position */
-        div[data-testid="stVerticalBlock"] > div:first-child {
-            position: fixed;
-            top: 15px;
-            left: 0;
-            width: 100%;
-            z-index: 999999;
-            padding-left: 20px;
-            padding-right: 20px;
-        }
     </style>
 """, unsafe_allow_html=True)
 
 # -------------------------
-# 2. DATA LOADING
+# 2. NAČÍTÁNÍ DAT
 # -------------------------
 FILES = {
     "lines": "dxy_linechart_history_2.csv.txt",
@@ -140,8 +126,9 @@ def get_data(file_key):
     return pd.DataFrame()
 
 # -------------------------
-# 3. AUTHENTICATION
+# 3. PŘIHLAŠOVÁNÍ (AUTHENTICATOR)
 # -------------------------
+# Inicializace session state, aby aplikace nepadala
 if 'authentication_status' not in st.session_state:
     st.session_state['authentication_status'] = None
 if 'username' not in st.session_state:
@@ -154,56 +141,50 @@ hashed_passwords = [
     '$2b$12$t3n1S7pC2pP7tKjO9XbH9OqT3yGgY7Xw8tW1wG7p8r'  # guest123
 ]
 
-# Cookie v8 to reset session
+# Změna názvu cookie na 'v9' (Resetuje problémy s přihlášením)
 authenticator = stauth.Authenticate(
     names, usernames, hashed_passwords,
-    'fundamenticks_cookie_v8', 'random_key_v8', cookie_expiry_days=1
+    'fundamenticks_cookie_v9', 'random_key_v9', cookie_expiry_days=1
 )
 
-# Nav State
+# Navigace
 if 'page' not in st.session_state: st.session_state['page'] = 'landing'
 if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'watchlist'
 
 # -------------------------
-# 4. RENDER FUNCTIONS
+# 4. VYKRESLOVACÍ FUNKCE
 # -------------------------
 
 def render_navbar():
-    # Background element
-    st.markdown('<div class="header-bg"></div>', unsafe_allow_html=True)
-    
-    # Layout: Logo (Left) -- Spacer -- Login Button (Right)
+    """Horní lišta (Sticky Header)"""
+    # Vytvoříme sloupce přímo pro tlačítka
     c1, c2, c3 = st.columns([3, 5, 2])
     
     with c1:
-        # Logo Button (Returns to Landing)
+        # Logo Tlačítko (Funguje jako Domů)
         if st.button("> FUNDAMENTICKS_", key="nav_logo"):
             st.session_state['page'] = 'landing'
             st.rerun()
             
     with c3:
-        # Login / Start Button on Navbar
-        # This button will inherit the green border style
+        # Login / Logout tlačítko
         if st.session_state.get('authentication_status'):
              if st.button("LOGOUT"):
-                 authenticator.logout('LOGOUT', 'main') # Logic handled by lib, button is visual
+                 authenticator.logout('LOGOUT', 'main')
         else:
             if st.button("LOGIN / START SYSTEM", key="nav_login"):
                 st.session_state['page'] = 'login'
                 st.rerun()
 
 def render_landing():
-    # Spacer because navbar is fixed
-    st.write("") 
-    
+    st.write("")
     col_head_1, col_head_2 = st.columns([3,1])
     with col_head_1:
         st.markdown("<h1>SYSTEM STATUS: <span style='color:#00FF00'>ONLINE</span></h1>", unsafe_allow_html=True)
-    # Note: Second column empty as login is now in Navbar
 
     st.markdown("---")
     
-    # FEATURES
+    # VLASTNOSTI (FEATURES)
     c1, c2, c3 = st.columns(3)
     
     with c1:
@@ -236,9 +217,11 @@ def render_landing():
     st.markdown("---")
     st.markdown("<h3><center>ACCESS LEVELS</center></h3>", unsafe_allow_html=True)
 
+    # Sekce Access Levels s tlačítky pod sebou
     col_free, col_paid = st.columns(2)
     
     with col_free:
+        # Box
         st.markdown("""
         <div class="feature-box" style="text-align:center">
             <h3 style="color:white">TIER: FREE</h3>
@@ -249,12 +232,13 @@ def render_landing():
             </ul>
         </div>
         """, unsafe_allow_html=True)
-        # Button with Green Border
+        # Tlačítko pod boxem (Zelený rámeček díky CSS)
         if st.button("GET STARTED (FREE)", key="btn_free"):
             st.session_state['page'] = 'login'
             st.rerun()
         
     with col_paid:
+        # Box (Zelený rámeček)
         st.markdown("""
         <div class="paid-box" style="text-align:center">
             <h3 style="color:#00FF00">TIER: PAID (ADMIN)</h3>
@@ -266,7 +250,7 @@ def render_landing():
             </ul>
         </div>
         """, unsafe_allow_html=True)
-        # Button with Green Border
+        # Tlačítko pod boxem (Zelený rámeček díky CSS)
         if st.button("GET STARTED (PAID)", key="btn_paid"):
             st.session_state['page'] = 'login'
             st.rerun()
@@ -309,6 +293,7 @@ def render_login_page():
 def render_dashboard():
     user_status = 'PAID' if st.session_state["username"] == 'admin' else 'FREE'
     
+    # SIDEBAR
     with st.sidebar:
         st.markdown(f"### USER: {st.session_state['username'].upper()}")
         st.markdown(f"### TIER: <span style='color:{'#00FF00' if user_status=='PAID' else 'white'}'>{user_status}</span>", unsafe_allow_html=True)
@@ -316,8 +301,10 @@ def render_dashboard():
         if st.button("> WATCHLIST"): st.session_state['active_tab'] = 'watchlist'; st.rerun()
         if st.button("> CURRENCY HUB"): st.session_state['active_tab'] = 'currency'; st.rerun()
         st.markdown("---")
+        # Logout handled by library logic
         authenticator.logout('LOGOUT', 'main')
 
+    # MAIN CONTENT
     st.markdown(f"<h2>MODULE: {st.session_state['active_tab'].upper()}</h2>", unsafe_allow_html=True)
     st.markdown("---")
 
@@ -348,6 +335,12 @@ def render_dashboard():
     elif st.session_state['active_tab'] == 'currency':
         if user_status == 'FREE':
             st.error("SECURITY ALERT: MODULE LOCKED")
+            st.markdown("""
+                <div style="border: 1px dashed red; padding: 20px; text-align: center;">
+                    <h3 style="color:red">RESTRICTED AREA</h3>
+                    <p>Currency Overview is available for PAID users only.</p>
+                </div>
+            """, unsafe_allow_html=True)
         else:
             st.success("ACCESS GRANTED: FULL MARKET OVERVIEW")
             df = get_data("heatmap")
@@ -362,9 +355,9 @@ def render_dashboard():
                 st.plotly_chart(fig, use_container_width=True)
 
 # -------------------------
-# 5. MAIN CONTROLLER
+# 5. HLAVNÍ KONTROLER
 # -------------------------
-# Render Navbar on every page
+# Vykreslit lištu na každé stránce
 render_navbar()
 
 if st.session_state.get('authentication_status'):
