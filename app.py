@@ -6,7 +6,7 @@ import streamlit_authenticator as stauth
 import os
 
 # -------------------------
-# 1. KONFIGURACE A DESIGN (STANDARD SCROLL)
+# 1. KONFIGURACE (Vynucení otevřeného menu)
 # -------------------------
 st.set_page_config(page_title="Fundamenticks", layout="wide", initial_sidebar_state="expanded")
 
@@ -19,22 +19,27 @@ st.markdown("""
             font-family: 'Courier New', Courier, monospace;
         }
         
-        /* SCHOVÁNÍ PRVKŮ STREAMLITU */
-        header {visibility: hidden !important;}
-        [data-testid="stHeader"] {display: none !important;}
-        footer {display: none !important;}
-        
-        /* STANDARDNÍ ROZLOŽENÍ (Žádné fixní pozice) */
-        .block-container {
-            padding-top: 1rem !important; /* Jen malý odstup od vrchu */
-            padding-left: 2rem !important;
-            padding-right: 2rem !important;
+        /* SKRYTÍ HORNÍ LIŠTY STREAMLITU (ALE NECHÁME MENU TLAČÍTKO) */
+        /* Schováme dekorace, ale zachováme funkčnost */
+        header[data-testid="stHeader"] {
+            background-color: transparent;
         }
+        /* Schováme barevný proužek nahoře */
+        div[data-testid="stDecoration"] {
+            display: none;
+        }
+        footer {display: none !important;}
 
-        /* SIDEBAR DESIGN */
+        /* --- STYL LEVÉHO MENU (SIDEBAR) --- */
         section[data-testid="stSidebar"] {
-            background-color: #050505;
+            background-color: #050505; /* Tmavé pozadí menu */
             border-right: 1px solid #333;
+            width: 300px !important; /* Pevná šířka */
+        }
+        
+        /* Tlačítko pro zavření menu (křížek) - obarvíme na zeleno */
+        button[kind="header"] {
+            color: #00FF00 !important;
         }
 
         /* TEXTY */
@@ -134,25 +139,24 @@ hashed_passwords = [
 
 authenticator = stauth.Authenticate(
     names, usernames, hashed_passwords,
-    'cookie_v15_normal', 'key_v15_normal', cookie_expiry_days=1
+    'cookie_v16_sidebar', 'key_v16_sidebar', cookie_expiry_days=1
 )
 
 if 'page' not in st.session_state: st.session_state['page'] = 'landing'
 if 'active_tab' not in st.session_state: st.session_state['active_tab'] = 'dashboard_home'
 
 # -------------------------
-# 4. HORNÍ LIŠTA (NAVBAR) - STANDARDNÍ
+# 4. HORNÍ LIŠTA (NAVBAR)
 # -------------------------
 def render_navbar():
-    """Lišta je vykreslena jako první element stránky, takže je nahoře."""
+    """Lišta nahoře"""
     c1, c2, c3, c4 = st.columns([4, 2, 1.5, 1.5])
     
     with c1:
-        # Logo jako text
         st.markdown('<div class="brand-text">> FUNDAMENTICKS_</div>', unsafe_allow_html=True)
         
     with c3:
-        # GO IN (TEST) - Vidí jen nepřihlášený
+        # GO IN (TEST)
         if not st.session_state.get('authentication_status'):
             if st.button("GO IN (TEST)"):
                 st.session_state['authentication_status'] = True
@@ -163,13 +167,12 @@ def render_navbar():
                 st.rerun()
                 
     with c4:
-        # Login tlačítko - Vidí jen nepřihlášený
+        # Login / Sign In
         if not st.session_state.get('authentication_status'):
             if st.button("LOGIN / SIGN IN"):
                 st.session_state['page'] = 'login'
                 st.rerun()
 
-    # Oddělovač pod lištou
     st.markdown("---")
 
 # -------------------------
@@ -184,33 +187,27 @@ def render_landing():
     
     st.write("")
     
-    # VLASTNOSTI
+    # FEATURES
     c1, c2, c3 = st.columns(3)
-    
     with c1:
         st.markdown("""
         <div class="data-box">
             <h4>[ MACRO_DATA ]</h4>
-            <p>Analyze historical seasonality of key currencies (USD, EUR) over the last 15 years. 
-            Identify months with the highest probability of growth or decline.</p>
+            <p>Analyze historical seasonality of key currencies (USD, EUR) over the last 15 years.</p>
         </div>
         """, unsafe_allow_html=True)
-        
     with c2:
         st.markdown("""
         <div class="data-box">
             <h4>[ AI_SCORING ]</h4>
-            <p>Our algorithm evaluates fundamental news (NFP, CPI, FED) in real-time. 
-            Instantly translates complex macroeconomic data into a simple score: Bullish or Bearish.</p>
+            <p>Our algorithm evaluates fundamental news (NFP, CPI, FED) in real-time.</p>
         </div>
         """, unsafe_allow_html=True)
-        
     with c3:
         st.markdown("""
         <div class="data-box">
             <h4>[ WATCHLIST ]</h4>
-            <p>Create a personalized list of assets to track. Monitor price action 
-            and seasonal trends for specific indices and currency pairs in one dashboard.</p>
+            <p>Create a personalized list of assets to track and monitor price action.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -273,12 +270,13 @@ def render_login_page():
             st.rerun()
 
 def render_dashboard_content():
-    # BOČNÍ MENU (SIDEBAR)
+    # --- LEVÉ MENU (SIDEBAR) ---
+    # Toto se zobrazí vlevo v placené sekci
     with st.sidebar:
-        st.markdown(f"## USER: {st.session_state['username'].upper()}")
+        st.markdown(f"### USER: {st.session_state['username'].upper()}")
         st.markdown("---")
         
-        # Navigace
+        # Navigační tlačítka
         if st.button("DASHBOARD"): st.session_state['active_tab'] = 'dashboard_home'; st.rerun()
         if st.button("CURRENCY OVERVIEW"): st.session_state['active_tab'] = 'currency_overview'; st.rerun()
         if st.button("ECONOMIC CALENDAR"): st.session_state['active_tab'] = 'economic_calendar'; st.rerun()
@@ -287,14 +285,14 @@ def render_dashboard_content():
             
         st.markdown("---")
         
-        # LOGOUT
+        # Logout
         if st.button("LOGOUT"):
             st.session_state['authentication_status'] = None
             st.session_state['username'] = None
             st.session_state['page'] = 'landing'
             st.rerun()
 
-    # HLAVNÍ OBSAH
+    # --- HLAVNÍ OBSAH (VPRAVO) ---
     tab = st.session_state['active_tab']
     
     if tab == 'dashboard_home':
@@ -321,6 +319,7 @@ def render_dashboard_content():
     elif tab == 'currency_overview':
         st.markdown("## > CURRENCY OVERVIEW: USD")
         st.markdown("---")
+        
         st.markdown("#### 1. FUNDAMENTAL NEWS BREAKDOWN")
         st.table(pd.DataFrame({
             "Category": ["Inflation", "Labor Market", "Central Bank", "Growth"],
@@ -359,7 +358,6 @@ def render_dashboard_content():
             asset = st.selectbox("SELECT ASSET", ["SPX500", "EURUSD", "GBPUSD", "XAUUSD", "BTCUSD"])
         with col2:
             st.markdown(f"<div class='data-box'><h3>ANALYZING: {asset}</h3></div>", unsafe_allow_html=True)
-            # Mock Chart
             st.line_chart([100, 102, 101, 104, 103, 106, 108])
 
     elif tab == 'profile':
@@ -376,11 +374,8 @@ def render_dashboard_content():
 # -------------------------
 # 6. HLAVNÍ KONTROLER
 # -------------------------
-
-# Vždy vykreslit lištu jako první
 render_navbar()
 
-# Router
 if st.session_state.get('authentication_status'):
     render_dashboard_content()
 else:
